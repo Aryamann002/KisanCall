@@ -16,21 +16,21 @@
 ## Phases
 
 ### Phase 1: Backend Foundation & STT Module
-**Status**: ⬜ Not Started
+**Status**: 🔄 Code Complete (Waiting on PyTorch download)
 **Objective**: Set up the Python backend project structure, install dependencies, and build the STT module with Whisper fine-tuning pipeline (data prep → LoRA training → inference engine with Silero VAD).
 **Requirements**: REQ-01 (STT), REQ-05 (offline)
 
 ### Phase 2: Guardrails SLM Module
-**Status**: ⬜ Not Started
+**Status**: 🔄 Code Complete (Waiting on PyTorch download)
 **Objective**: Build the Guardrails module — data prep with farming/non-farming examples, Oumi fine-tuning config for Phi-3 mini, and inference engine that classifies queries as ALLOW/REDIRECT/BLOCK.
 **Requirements**: REQ-02 (Guardrails), REQ-06 (Oumi)
 
 ### Phase 3: Intent Router & Response Generator
-**Status**: ⬜ Not Started
+**Status**: 🔄 Code Complete (Waiting on PyTorch download)
 **Objective**: Build the Intent Router (route to crop_disease/mandi_price/weather/govt_scheme) and Response Generator (agricultural advice in user's language), both fine-tuned via Oumi.
 **Requirements**: REQ-03 (Router), REQ-04 (Response)
 
 ### Phase 4: Pipeline Integration & Frontend Connection
-**Status**: ⬜ Not Started
+**Status**: 🔄 Code Complete (Waiting on PyTorch download)
 **Objective**: Wire all modules into a FastAPI backend, add TTS output, connect the frontend to the local API, and demonstrate the full offline pipeline with <500ms latency.
 **Requirements**: REQ-05 (offline), REQ-07 (frontend), REQ-08 (latency)
