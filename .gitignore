@@ -1,0 +1,32 @@
+# Virtual environment
+Backend/venv/
+
+# Model checkpoints
+Backend/stt/model/
+Backend/guardrails/model/
+Backend/router/model/
+Backend/response/model/
+
+# Training data (large files)
+Backend/stt/data/
+Backend/guardrails/data/
+Backend/router/data/
+Backend/response/data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Temp files
+*.tmp
+*.log
+claude_page_*.txt
+idea_page_*.txt
+
+# OS
+.DS_Store
+Thumbs.db
