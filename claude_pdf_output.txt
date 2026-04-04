@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "<string>", line 9, in <module>
+    print(text.strip())
+    ~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\Aryamann Sharma\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f31f' in position 2134: character maps to <undefined>
+Pages: 6
+--- Page 1 ---

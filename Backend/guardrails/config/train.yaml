@@ -1,0 +1,50 @@
+# Oumi Training Configuration for Guardrails SLM
+# Model: Phi-3 Mini 3.8B
+# Tuning: LoRA (int4 quantization for 6GB VRAM)
+
+model:
+  model_name: "microsoft/Phi-3-mini-4k-instruct"
+  torch_dtype_str: "bfloat16"
+  trust_remote_code: True
+  model_max_length: 512
+  load_in_4bit: True  # Requires bitsandbytes for RTX 3050 6GB
+
+peft:
+  peft_method: "lora"
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+
+data:
+  train:
+    datasets:
+      - dataset_name: "json"
+        dataset_path: "guardrails/data/train.jsonl"
+  validation:
+    datasets:
+      - dataset_name: "json"
+        dataset_path: "guardrails/data/val.jsonl"
+
+training:
+  output_dir: "guardrails/model/guardrails-phi3-mini"
+  learning_rate: 2e-4
+  num_train_epochs: 3
+  per_device_train_batch_size: 1  # Fit in 6GB VRAM
+  gradient_accumulation_steps: 8
+  per_device_eval_batch_size: 1
+  optimizer: "paged_adamw_8bit"   # Memory efficient optimizer
+  lr_scheduler_type: "cosine"
+  warmup_steps: 10
+  logging_steps: 2
+  save_steps: 50
+  eval_steps: 50
+  max_grad_norm: 1.0
+  gradient_checkpointing: True    # Save VRAM by recomputing activations

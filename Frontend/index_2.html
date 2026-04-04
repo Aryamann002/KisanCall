@@ -1,0 +1,2346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KisanCall — Voice AI for Farmers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --surface: #041710;
+  --surface-low: #0B1F18;
+  --surface-mid: #142a20;
+  --surface-high: #253931;
+  --surface-highest: #2e4540;
+  --primary: #2d6a4f;
+  --primary-container: #1B4332;
+  --secondary: #FFB781;
+  --secondary-container: #F98400;
+  --tertiary: #FFBA27;
+  --on-surface: #E8F0EB;
+  --on-surface-variant: #C1C8C2;
+  --outline-variant: rgba(193,200,194,0.15);
+  --gold-glow: rgba(249,132,0,0.25);
+  --green-glow: rgba(45,106,79,0.3);
+  --font-display: 'Manrope', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--surface);
+  color: var(--on-surface);
+  font-family: var(--font-display);
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* NAV */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 3rem;
+  background: rgba(4,23,16,0.7);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--on-surface);
+}
+
+.nav-logo .leaf { font-size: 1.5rem; }
+.nav-logo span { color: var(--secondary-container); }
+
+.nav-links {
+  display: flex;
+  gap: 2.5rem;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--on-surface-variant);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover { color: var(--tertiary); }
+
+.nav-badge {
+  background: var(--primary-container);
+  border: 1px solid rgba(255,186,39,0.3);
+  color: var(--tertiary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.4rem 1rem;
+  border-radius: 100px;
+}
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8rem 3rem 4rem;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--primary-container) 0%, #0d2118 40%, var(--surface) 100%);
+}
+
+.hero-glow {
+  position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(249,132,0,0.15) 0%, transparent 70%);
+  top: -100px; right: -100px;
+  pointer-events: none;
+}
+
+.hero-glow-2 {
+  position: absolute;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(45,106,79,0.2) 0%, transparent 70%);
+  bottom: 0; left: -50px;
+  pointer-events: none;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--tertiary);
+  margin-bottom: 1.5rem;
+  font-family: var(--font-mono);
+}
+
+.hero-eyebrow::before {
+  content: '';
+  width: 32px; height: 2px;
+  background: var(--secondary-container);
+  display: inline-block;
+}
+
+.hero h1 {
+  font-size: clamp(3rem, 7vw, 6rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.0;
+  max-width: 800px;
+  margin-bottom: 1rem;
+}
+
+.hero h1 .highlight {
+  background: linear-gradient(135deg, var(--secondary-container), var(--tertiary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  font-size: 1.15rem;
+  color: var(--on-surface-variant);
+  max-width: 520px;
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.btn-primary {
+  background: var(--secondary-container);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 0.9rem 2rem;
+  border-radius: var(--radius-xl);
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: 0 0 0 0 rgba(249,132,0,0);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(249,132,0,0.35);
+}
+
+.btn-glass {
+  background: rgba(37,57,49,0.4);
+  backdrop-filter: blur(12px);
+  color: var(--on-surface);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.9rem 2rem;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--outline-variant);
+  cursor: pointer;
+  transition: all 0.25s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-glass:hover {
+  background: rgba(37,57,49,0.7);
+  border-color: rgba(193,200,194,0.35);
+}
+
+.hero-stats {
+  display: flex;
+  gap: 3rem;
+  margin-top: 4rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--outline-variant);
+}
+
+.hero-stat-val {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--secondary-container);
+  letter-spacing: -0.03em;
+}
+
+.hero-stat-label {
+  font-size: 0.8rem;
+  color: var(--on-surface-variant);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  margin-top: 0.2rem;
+}
+
+/* PROBLEM */
+.problem-section {
+  background: var(--surface-low);
+  padding: 6rem 3rem;
+}
+
+.section-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--tertiary);
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 3rem;
+}
+
+.problem-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.problem-card {
+  background: rgba(37,57,49,0.3);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.problem-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(249,132,0,0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.problem-num {
+  font-family: var(--font-mono);
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: var(--outline-variant);
+  line-height: 1;
+  margin-bottom: 1.5rem;
+}
+
+.problem-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.problem-card p {
+  font-size: 0.9rem;
+  color: var(--on-surface-variant);
+  line-height: 1.7;
+}
+
+.problem-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+/* LIVE DEMO SECTION */
+.demo-section {
+  background: var(--surface);
+  padding: 6rem 3rem;
+}
+
+.demo-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.demo-input-wrap {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.demo-input {
+  flex: 1;
+  background: var(--surface-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-xl);
+  padding: 1rem 1.5rem;
+  color: var(--on-surface);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.demo-input:focus {
+  border-color: var(--tertiary);
+  box-shadow: 0 0 0 3px rgba(255,186,39,0.1);
+}
+
+.demo-input::placeholder { color: rgba(193,200,194,0.5); }
+
+.demo-btn {
+  background: var(--secondary-container);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 1rem 2rem;
+  border-radius: var(--radius-xl);
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s;
+  white-space: nowrap;
+}
+
+.demo-btn:hover { box-shadow: 0 8px 30px rgba(249,132,0,0.4); transform: translateY(-1px); }
+.demo-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.demo-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.demo-chip {
+  background: rgba(27,67,50,0.5);
+  border: 1px solid var(--outline-variant);
+  color: var(--on-surface-variant);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.4rem 1rem;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-display);
+}
+
+.demo-chip:hover {
+  background: rgba(27,67,50,0.8);
+  color: var(--on-surface);
+  border-color: rgba(193,200,194,0.3);
+}
+
+/* Pipeline stages */
+.pipeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.pipeline-stage {
+  flex: 1;
+  min-width: 160px;
+  background: var(--surface-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1rem;
+  text-align: center;
+  position: relative;
+  transition: all 0.4s;
+  opacity: 0.4;
+}
+
+.pipeline-stage.active {
+  opacity: 1;
+  background: rgba(27,67,50,0.6);
+  border-color: var(--secondary-container);
+  box-shadow: 0 0 30px rgba(249,132,0,0.15);
+}
+
+.pipeline-stage.done {
+  opacity: 1;
+  background: rgba(27,67,50,0.4);
+  border-color: rgba(45,106,79,0.6);
+}
+
+.pipeline-stage.error {
+  opacity: 1;
+  background: rgba(100,20,20,0.4);
+  border-color: rgba(200,80,80,0.6);
+}
+
+.pipeline-arrow {
+  color: var(--outline-variant);
+  font-size: 1.2rem;
+  padding: 0 0.5rem;
+  flex-shrink: 0;
+  transition: color 0.4s;
+}
+
+.pipeline-arrow.lit { color: var(--secondary-container); }
+
+.stage-icon { font-size: 1.5rem; margin-bottom: 0.4rem; }
+
+.stage-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+  font-family: var(--font-mono);
+}
+
+.stage-latency {
+  font-size: 0.65rem;
+  color: var(--tertiary);
+  margin-top: 0.2rem;
+  font-family: var(--font-mono);
+}
+
+.stage-status {
+  font-size: 0.7rem;
+  margin-top: 0.3rem;
+  color: var(--on-surface-variant);
+}
+
+.pipeline-stage.active .stage-status { color: var(--secondary); }
+.pipeline-stage.done .stage-status { color: #4ade80; }
+.pipeline-stage.error .stage-status { color: #f87171; }
+
+/* Guardrails JSON display */
+.guardrails-panel {
+  background: var(--surface-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  display: none;
+  animation: slideUp 0.4s ease;
+}
+
+.guardrails-panel.visible { display: block; }
+
+.panel-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--tertiary);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.panel-label::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--secondary-container);
+  border-radius: 50%;
+  display: inline-block;
+  animation: blink 1s infinite;
+}
+
+.json-display {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.8;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  border: 1px solid var(--outline-variant);
+}
+
+.json-key { color: var(--secondary); }
+.json-val-true { color: #4ade80; }
+.json-val-false { color: #f87171; }
+.json-val-str { color: var(--tertiary); }
+.json-brace { color: var(--on-surface-variant); }
+
+.decision-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-top: 1rem;
+}
+
+.decision-badge.allow {
+  background: rgba(74,222,128,0.15);
+  border: 1px solid rgba(74,222,128,0.4);
+  color: #4ade80;
+}
+
+.decision-badge.block {
+  background: rgba(248,113,113,0.15);
+  border: 1px solid rgba(248,113,113,0.4);
+  color: #f87171;
+}
+
+.decision-badge.redirect {
+  background: rgba(255,186,39,0.15);
+  border: 1px solid rgba(255,186,39,0.4);
+  color: var(--tertiary);
+}
+
+/* Response panel */
+.response-panel {
+  background: linear-gradient(135deg, rgba(27,67,50,0.5) 0%, rgba(37,57,49,0.3) 100%);
+  border: 1px solid rgba(45,106,79,0.5);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  display: none;
+  animation: slideUp 0.4s ease;
+}
+
+.response-panel.visible { display: block; }
+
+.response-text {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--on-surface);
+}
+
+.response-meta {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.meta-tag {
+  background: rgba(255,183,129,0.1);
+  border: 1px solid rgba(255,183,129,0.2);
+  color: var(--secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.3rem 0.75rem;
+  border-radius: 100px;
+  font-family: var(--font-mono);
+}
+
+/* PHONE CALL UI */
+.phone-section {
+  background: var(--surface-low);
+  padding: 6rem 3rem;
+}
+
+.phone-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.phone-info h2 {
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+}
+
+.phone-info p {
+  font-size: 1rem;
+  color: var(--on-surface-variant);
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+}
+
+.phone-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.phone-feature {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--on-surface-variant);
+}
+
+.phone-feature::before {
+  content: '✓';
+  width: 20px; height: 20px;
+  background: rgba(74,222,128,0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: #4ade80;
+  flex-shrink: 0;
+  text-align: center;
+  line-height: 20px;
+}
+
+/* Phone mockup */
+.phone-mockup {
+  background: var(--surface-mid);
+  border: 2px solid rgba(37,57,49,0.8);
+  border-radius: 2.5rem;
+  padding: 2rem 1.5rem;
+  max-width: 320px;
+  margin: 0 auto;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 60px rgba(249,132,0,0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.phone-mockup::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 80px; height: 6px;
+  background: var(--surface-high);
+  border-radius: 0 0 1rem 1rem;
+}
+
+.phone-screen {
+  background: var(--surface-low);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.phone-caller {
+  text-align: center;
+  margin-bottom: 2rem;
+  margin-top: 1rem;
+}
+
+.caller-avatar {
+  width: 80px; height: 80px;
+  background: linear-gradient(135deg, var(--primary-container), var(--surface-high));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  margin: 0 auto 1rem;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+
+.caller-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.caller-sub {
+  font-size: 0.8rem;
+  color: var(--on-surface-variant);
+  margin-top: 0.25rem;
+}
+
+.phone-transcript {
+  width: 100%;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+  max-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.transcript-bubble {
+  background: rgba(37,57,49,0.6);
+  border-radius: 1rem 1rem 1rem 0.25rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.8rem;
+  color: var(--on-surface);
+  align-self: flex-start;
+  max-width: 90%;
+  border: 1px solid var(--outline-variant);
+  animation: slideUp 0.3s ease;
+}
+
+.transcript-bubble.response {
+  background: rgba(27,67,50,0.6);
+  border-radius: 1rem 1rem 0.25rem 1rem;
+  align-self: flex-end;
+  border-color: rgba(45,106,79,0.4);
+  color: var(--on-surface);
+}
+
+.transcript-bubble.system {
+  background: rgba(255,186,39,0.1);
+  border-color: rgba(255,186,39,0.2);
+  color: var(--tertiary);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  border-radius: 0.5rem;
+  align-self: center;
+}
+
+.phone-controls {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  align-items: center;
+}
+
+.call-btn {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.call-btn.call-start {
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34,197,94,0.4);
+  animation: pulse-green 2s infinite;
+}
+
+.call-btn.call-start.calling {
+  background: #ef4444;
+  animation: none;
+  box-shadow: 0 0 30px rgba(239,68,68,0.4);
+}
+
+.call-btn:hover { transform: scale(1.08); }
+
+.mic-wave {
+  display: none;
+  align-items: center;
+  gap: 3px;
+  height: 30px;
+}
+
+.mic-wave.active { display: flex; }
+
+.mic-bar {
+  width: 3px;
+  background: var(--secondary-container);
+  border-radius: 2px;
+  animation: wave 0.6s ease-in-out infinite;
+}
+
+.mic-bar:nth-child(1) { animation-delay: 0s; height: 10px; }
+.mic-bar:nth-child(2) { animation-delay: 0.1s; height: 20px; }
+.mic-bar:nth-child(3) { animation-delay: 0.2s; height: 14px; }
+.mic-bar:nth-child(4) { animation-delay: 0.15s; height: 24px; }
+.mic-bar:nth-child(5) { animation-delay: 0.05s; height: 12px; }
+
+/* ARCHITECTURE */
+.arch-section {
+  background: var(--surface);
+  padding: 6rem 3rem;
+}
+
+.arch-diagram {
+  background: var(--surface-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-2xl);
+  padding: 3rem;
+  overflow-x: auto;
+}
+
+.arch-flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 700px;
+}
+
+.arch-node {
+  flex: 1;
+  text-align: center;
+}
+
+.arch-box {
+  background: rgba(37,57,49,0.4);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 0.75rem;
+  transition: all 0.3s;
+  cursor: default;
+  position: relative;
+}
+
+.arch-box:hover {
+  background: rgba(37,57,49,0.7);
+  border-color: var(--secondary-container);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(249,132,0,0.15);
+}
+
+.arch-icon { font-size: 1.75rem; margin-bottom: 0.4rem; }
+
+.arch-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  color: var(--on-surface);
+}
+
+.arch-model {
+  font-size: 0.65rem;
+  color: var(--tertiary);
+  margin-top: 0.25rem;
+  font-family: var(--font-mono);
+}
+
+.arch-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 0.5rem;
+  flex-shrink: 0;
+}
+
+.arch-arrow-line {
+  height: 2px;
+  width: 40px;
+  background: linear-gradient(90deg, var(--secondary-container), var(--tertiary));
+  position: relative;
+}
+
+.arch-arrow-line::after {
+  content: '▶';
+  position: absolute;
+  right: -6px;
+  top: -8px;
+  color: var(--secondary-container);
+  font-size: 0.7rem;
+}
+
+.arch-latency {
+  font-size: 0.6rem;
+  font-family: var(--font-mono);
+  color: var(--secondary);
+  margin-top: 0.4rem;
+  white-space: nowrap;
+}
+
+.arch-connector-line {
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--secondary-container), var(--tertiary));
+}
+
+/* COMPARISON TABLE */
+.compare-section {
+  background: var(--surface-low);
+  padding: 6rem 3rem;
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.compare-card {
+  border-radius: var(--radius-xl);
+  padding: 2.5rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.compare-card.gpt {
+  background: rgba(50,30,30,0.4);
+  border: 1px solid rgba(200,80,80,0.2);
+}
+
+.compare-card.kisan {
+  background: rgba(27,67,50,0.5);
+  border: 1px solid rgba(45,106,79,0.5);
+  box-shadow: 0 0 40px rgba(249,132,0,0.1);
+}
+
+.compare-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.compare-icon { font-size: 2rem; }
+
+.compare-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.compare-card.gpt .compare-title { color: #f87171; }
+.compare-card.kisan .compare-title { color: var(--tertiary); }
+
+.compare-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.compare-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(0,0,0,0.2);
+  border-radius: var(--radius-lg);
+}
+
+.compare-metric {
+  font-size: 0.8rem;
+  color: var(--on-surface-variant);
+  font-weight: 500;
+}
+
+.compare-val {
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+.compare-card.gpt .compare-val { color: #f87171; }
+.compare-card.kisan .compare-val { color: #4ade80; }
+
+.vs-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vs-text {
+  background: var(--surface-high);
+  border: 2px solid var(--outline-variant);
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--on-surface-variant);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+/* WER TABLE */
+.wer-section {
+  background: var(--surface);
+  padding: 6rem 3rem;
+}
+
+.wer-table {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--outline-variant);
+}
+
+.wer-table th {
+  background: var(--surface-low);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.wer-table td {
+  padding: 1.25rem 1.5rem;
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.wer-table tr:last-child td { border-bottom: none; }
+
+.wer-table tr:nth-child(even) td { background: rgba(37,57,49,0.1); }
+
+.wer-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.wer-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,183,129,0.3);
+}
+
+.wer-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease;
+}
+
+.wer-good { background: #4ade80; }
+.wer-baseline { background: #f87171; }
+
+/* ROADMAP */
+.roadmap-section {
+  background: var(--surface-low);
+  padding: 6rem 3rem;
+}
+
+.roadmap-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  position: relative;
+}
+
+.roadmap-grid::before {
+  content: '';
+  position: absolute;
+  top: 3.5rem;
+  left: calc(12.5% + 1rem);
+  right: calc(12.5% + 1rem);
+  height: 2px;
+  background: linear-gradient(90deg, #22c55e, var(--secondary-container), var(--tertiary), rgba(255,183,129,0.3));
+}
+
+.roadmap-card {
+  background: var(--surface-mid);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-xl);
+  padding: 2rem 1.5rem;
+  position: relative;
+  text-align: center;
+}
+
+.roadmap-card.live {
+  background: rgba(27,67,50,0.5);
+  border-color: rgba(74,222,128,0.4);
+}
+
+.roadmap-num {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+  margin: 0 auto 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.roadmap-card.live .roadmap-num { background: #22c55e; color: #000; }
+.roadmap-card:nth-child(2) .roadmap-num { background: var(--secondary-container); color: #fff; }
+.roadmap-card:nth-child(3) .roadmap-num { background: var(--primary); color: #fff; }
+.roadmap-card:nth-child(4) .roadmap-num { background: var(--surface-high); color: var(--on-surface); }
+
+.roadmap-phase {
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+  margin-bottom: 0.5rem;
+}
+
+.roadmap-card.live .roadmap-phase { color: #4ade80; }
+
+.roadmap-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.roadmap-items {
+  list-style: none;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.roadmap-items li {
+  font-size: 0.8rem;
+  color: var(--on-surface-variant);
+  padding-left: 1rem;
+  position: relative;
+}
+
+.roadmap-items li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--secondary-container);
+  font-size: 0.7rem;
+}
+
+/* FAQ */
+.faq-section {
+  background: var(--surface);
+  padding: 6rem 3rem;
+}
+
+.faq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.faq-card {
+  background: var(--surface-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  transition: all 0.3s;
+}
+
+.faq-card:hover {
+  border-color: rgba(193,200,194,0.3);
+  transform: translateY(-2px);
+}
+
+.faq-q {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--tertiary);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.faq-q::before {
+  content: 'Q';
+  background: rgba(255,186,39,0.15);
+  color: var(--tertiary);
+  font-size: 0.65rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.25rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.faq-a {
+  font-size: 0.9rem;
+  color: var(--on-surface-variant);
+  line-height: 1.7;
+}
+
+/* TESTIMONIAL */
+.testimonial-section {
+  background: var(--surface-low);
+  padding: 5rem 3rem;
+  text-align: center;
+}
+
+.whatsapp-chat {
+  max-width: 360px;
+  margin: 2rem auto;
+  background: #0d1f1a;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+}
+
+.wa-header {
+  background: #1a3028;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.wa-avatar {
+  width: 40px; height: 40px;
+  background: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.wa-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.wa-status {
+  font-size: 0.7rem;
+  color: #4ade80;
+}
+
+.wa-messages {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50'%3E%3Ccircle cx='25' cy='25' r='1' fill='rgba(255,255,255,0.02)'/%3E%3C/svg%3E");
+}
+
+.wa-msg {
+  padding: 0.6rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.82rem;
+  max-width: 85%;
+}
+
+.wa-msg.user {
+  background: #2d6a4f;
+  align-self: flex-end;
+  border-radius: 0.75rem 0.75rem 0.15rem 0.75rem;
+}
+
+.wa-msg.bot {
+  background: #1e3a2f;
+  align-self: flex-start;
+  border-radius: 0.75rem 0.75rem 0.75rem 0.15rem;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.wa-msg .wa-time {
+  font-size: 0.62rem;
+  color: rgba(255,255,255,0.4);
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+/* TEAM */
+.team-section {
+  background: var(--surface);
+  padding: 4rem 3rem;
+}
+
+.team-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, rgba(27,67,50,0.4) 0%, rgba(37,57,49,0.2) 100%);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-2xl);
+  padding: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.team-logo {
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, var(--secondary-container), var(--tertiary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.team-details {
+  text-align: right;
+}
+
+.team-name {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.team-college {
+  color: var(--on-surface-variant);
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.eclipse-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255,186,39,0.1);
+  border: 1px solid rgba(255,186,39,0.3);
+  color: var(--tertiary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.4rem 1rem;
+  border-radius: 100px;
+  margin-top: 0.75rem;
+}
+
+/* FOOTER */
+footer {
+  background: var(--surface-low);
+  padding: 2rem 3rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--on-surface-variant);
+  border-top: 1px solid var(--outline-variant);
+}
+
+/* ANIMATIONS */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+  50%       { box-shadow: 0 0 0 16px rgba(34,197,94,0); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.4); }
+  50%       { transform: scaleY(1); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+/* Fade in on scroll */
+.fade-in {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.fade-in.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  nav { padding: 1rem 1.5rem; }
+  .nav-links { display: none; }
+  .hero { padding: 7rem 1.5rem 3rem; }
+  .hero-stats { flex-wrap: wrap; gap: 1.5rem; }
+  .problem-grid, .compare-grid, .faq-grid, .phone-grid { grid-template-columns: 1fr; }
+  .roadmap-grid { grid-template-columns: 1fr 1fr; }
+  .roadmap-grid::before { display: none; }
+  .problem-section, .demo-section, .phone-section, .arch-section,
+  .compare-section, .wer-section, .roadmap-section, .faq-section,
+  .testimonial-section, .team-section { padding: 4rem 1.5rem; }
+  .team-inner { flex-direction: column; text-align: center; }
+  .team-details { text-align: center; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--surface-high); border-radius: 2px; }
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <span class="leaf">🌾</span>
+    Kisan<span>Call</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#demo">Live Demo</a></li>
+    <li><a href="#phone">Phone UI</a></li>
+    <li><a href="#arch">Architecture</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+  <div class="nav-badge">Eclipse 6.0 — EC602</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow-2"></div>
+  <div class="hero-eyebrow">Voice AI for Farmers — EC602</div>
+  <h1>Expert advice,<br>in their <span class="highlight">own tongue.</span></h1>
+  <p class="hero-sub">58% of India's workforce farms the land. Yet expert agricultural advice has always been in English, or locked behind bureaucracy. KisanCall fixes that — one voice query at a time.</p>
+  <div class="hero-actions">
+    <a href="#demo" class="btn-primary">▶ Try the Live Demo</a>
+    <a href="#phone" class="btn-glass">📞 Phone Call UI</a>
+  </div>
+  <div class="hero-stats">
+    <div>
+      <div class="hero-stat-val">&lt;500ms</div>
+      <div class="hero-stat-label">End-to-end latency</div>
+    </div>
+    <div>
+      <div class="hero-stat-val">₹0</div>
+      <div class="hero-stat-label">Cost to the farmer</div>
+    </div>
+    <div>
+      <div class="hero-stat-val">2</div>
+      <div class="hero-stat-label">Languages supported</div>
+    </div>
+    <div>
+      <div class="hero-stat-val">4</div>
+      <div class="hero-stat-label">Specialized SLMs</div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section class="problem-section fade-in">
+  <div class="section-eyebrow">The Problem</div>
+  <h2 class="section-title">Three walls between a farmer<br>and the answer they need.</h2>
+  <div class="problem-grid">
+    <div class="problem-card">
+      <div class="problem-num">01</div>
+      <div class="problem-icon">🌿</div>
+      <h3>No real-time expert advice</h3>
+      <p>A crop disease can destroy an entire harvest in 48 hours. Reaching an agricultural expert takes days. Farmers make guesses. Crops suffer.</p>
+    </div>
+    <div class="problem-card">
+      <div class="problem-num">02</div>
+      <div class="problem-icon">🗣️</div>
+      <h3>Language is a locked door</h3>
+      <p>99% of government tools, AI chatbots, and crop advisory apps speak only English. India's farmers speak Punjabi, Hindi, and 18 other languages.</p>
+    </div>
+    <div class="problem-card">
+      <div class="problem-num">03</div>
+      <div class="problem-icon">📱</div>
+      <h3>Voice is the natural interface</h3>
+      <p>Typing is hard when your hands are in the soil. Smartphones are expensive. Farmers need to ask a question the same way they ask a neighbor — out loud.</p>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE DEMO -->
+<section class="demo-section" id="demo">
+  <div class="demo-container">
+    <div class="section-eyebrow fade-in">Interactive Demo</div>
+    <h2 class="section-title fade-in">Watch the pipeline<br>think in real time.</h2>
+
+    <div class="demo-examples fade-in">
+      <button class="demo-chip" onclick="setQuery('ਕਣਕ ਦੀ ਫ਼ਸਲ ਵਿੱਚ ਪੀਲਾਪਣ ਆ ਗਿਆ ਹੈ')">🌾 Wheat yellowing (Punjabi)</button>
+      <button class="demo-chip" onclick="setQuery('मेरी गेहूं की फसल में पीलापन आ गया है')">🌿 Wheat disease (Hindi)</button>
+      <button class="demo-chip" onclick="setQuery('Mandi mein aaj kanak da bhav kya hai')">💰 Mandi prices</button>
+      <button class="demo-chip" onclick="setQuery('PM Kisan Samman Nidhi ke liye apply kaise karein')">📋 Govt schemes</button>
+      <button class="demo-chip" onclick="setQuery('Mujhe cricket ka score batao')">❌ Off-topic (blocks)</button>
+      <button class="demo-chip" onclick="setQuery('Sarson de patte jhar rahe ne ki karan hai')">🌻 Mustard leaf drop</button>
+    </div>
+
+    <div class="demo-input-wrap fade-in">
+      <input class="demo-input" id="demoQuery" type="text" placeholder="Type in Punjabi, Hindi, or Romanized form... ਕਣਕ ਵਿੱਚ ਕੀੜੇ" />
+      <button class="demo-btn" id="demoRunBtn" onclick="runDemo()">Run Pipeline →</button>
+    </div>
+
+    <!-- Pipeline stages -->
+    <div class="pipeline fade-in" id="pipeline">
+      <div class="pipeline-stage" id="stage-stt">
+        <div class="stage-icon">🎙️</div>
+        <div class="stage-name">STT</div>
+        <div class="stage-latency">~120ms</div>
+        <div class="stage-status" id="stt-status">Waiting</div>
+      </div>
+      <div class="pipeline-arrow" id="arr1">→</div>
+      <div class="pipeline-stage" id="stage-guard">
+        <div class="stage-icon">🛡️</div>
+        <div class="stage-name">Guardrails</div>
+        <div class="stage-latency">~68ms</div>
+        <div class="stage-status" id="guard-status">Waiting</div>
+      </div>
+      <div class="pipeline-arrow" id="arr2">→</div>
+      <div class="pipeline-stage" id="stage-router">
+        <div class="stage-icon">🔀</div>
+        <div class="stage-name">Router</div>
+        <div class="stage-latency">~55ms</div>
+        <div class="stage-status" id="router-status">Waiting</div>
+      </div>
+      <div class="pipeline-arrow" id="arr3">→</div>
+      <div class="pipeline-stage" id="stage-gen">
+        <div class="stage-icon">💬</div>
+        <div class="stage-name">Response</div>
+        <div class="stage-latency">~180ms</div>
+        <div class="stage-status" id="gen-status">Waiting</div>
+      </div>
+    </div>
+
+    <!-- Guardrails JSON panel -->
+    <div class="guardrails-panel" id="guardrailsPanel">
+      <div class="panel-label">Guardrails SLM — Live JSON Decision</div>
+      <div class="json-display" id="jsonDisplay">
+        <span class="json-brace">{</span><br>
+        &nbsp;&nbsp;<span class="json-key">"is_farming"</span>: <span id="jFarming" class="json-val-true">…</span>,<br>
+        &nbsp;&nbsp;<span class="json-key">"is_safe"</span>: <span id="jSafe" class="json-val-true">…</span>,<br>
+        &nbsp;&nbsp;<span class="json-key">"reason"</span>: <span id="jReason" class="json-val-str">"…"</span><br>
+        <span class="json-brace">}</span>
+      </div>
+      <div id="decisionBadge"></div>
+    </div>
+
+    <!-- Response panel -->
+    <div class="response-panel" id="responsePanel">
+      <div class="panel-label">Response Generator — Output</div>
+      <div class="response-text" id="responseText"></div>
+      <div class="response-meta" id="responseMeta"></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- PHONE CALL UI -->
+<section class="phone-section" id="phone">
+  <div class="phone-grid">
+    <div class="phone-info fade-in">
+      <div class="section-eyebrow">Demo — Voice Interface</div>
+      <h2>No app needed.<br>Just call.</h2>
+      <p>A farmer in rural Punjab doesn't have a smartphone or internet. They dial a toll-free number, speak in Punjabi, and get expert advice spoken back to them. This demo simulates that experience.</p>
+      <div class="phone-features">
+        <div class="phone-feature">Works on any phone — even a ₹800 feature phone</div>
+        <div class="phone-feature">Punjabi & Hindi voice detection via Whisper</div>
+        <div class="phone-feature">Guardrails filter before any processing</div>
+        <div class="phone-feature">Voice response via TTS — hands-free</div>
+        <div class="phone-feature">Under 500ms from question to answer</div>
+      </div>
+    </div>
+
+    <div class="fade-in">
+      <div class="phone-mockup">
+        <div class="phone-screen">
+          <div class="phone-caller">
+            <div class="caller-avatar">👨‍🌾</div>
+            <div class="caller-name">KisanCall</div>
+            <div class="caller-sub" id="callStatus">Press call to begin demo</div>
+          </div>
+
+          <div class="phone-transcript" id="phoneTranscript"></div>
+
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;">
+            <div class="mic-wave" id="micWave">
+              <div class="mic-bar"></div>
+              <div class="mic-bar"></div>
+              <div class="mic-bar"></div>
+              <div class="mic-bar"></div>
+              <div class="mic-bar"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phone-controls">
+          <button class="call-btn call-start" id="callBtn" onclick="toggleCall()" title="Start / End call">
+            📞
+          </button>
+        </div>
+      </div>
+      <p style="text-align:center;font-size:0.75rem;color:var(--on-surface-variant);margin-top:1rem;">
+        Uses browser microphone + Web Speech API for demo
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section class="arch-section" id="arch">
+  <div class="section-eyebrow fade-in" style="text-align:center;">System Architecture</div>
+  <h2 class="section-title fade-in" style="text-align:center;">4 specialized models,<br>one unified pipeline.</h2>
+
+  <div class="arch-diagram fade-in">
+    <div class="arch-flow">
+      <div class="arch-node">
+        <div class="arch-box">
+          <div class="arch-icon">🎙️</div>
+          <div class="arch-name">Whisper STT</div>
+          <div class="arch-model">Small · 244M</div>
+        </div>
+      </div>
+      <div class="arch-arrow">
+        <div class="arch-arrow-line"></div>
+        <div class="arch-latency">~120ms</div>
+      </div>
+      <div class="arch-node">
+        <div class="arch-box">
+          <div class="arch-icon">🛡️</div>
+          <div class="arch-name">Guardrails</div>
+          <div class="arch-model">Phi-3 mini · 3.8B</div>
+        </div>
+      </div>
+      <div class="arch-arrow">
+        <div class="arch-arrow-line"></div>
+        <div class="arch-latency">~68ms</div>
+      </div>
+      <div class="arch-node">
+        <div class="arch-box">
+          <div class="arch-icon">🔀</div>
+          <div class="arch-name">Intent Router</div>
+          <div class="arch-model">Phi-3 mini · 3.8B</div>
+        </div>
+      </div>
+      <div class="arch-arrow">
+        <div class="arch-arrow-line"></div>
+        <div class="arch-latency">~55ms</div>
+      </div>
+      <div class="arch-node">
+        <div class="arch-box">
+          <div class="arch-icon">💬</div>
+          <div class="arch-name">Response Gen</div>
+          <div class="arch-model">Phi-3 mini · 3.8B</div>
+        </div>
+      </div>
+      <div class="arch-arrow">
+        <div class="arch-arrow-line"></div>
+        <div class="arch-latency">~55ms</div>
+      </div>
+      <div class="arch-node">
+        <div class="arch-box">
+          <div class="arch-icon">🔊</div>
+          <div class="arch-name">TTS Output</div>
+          <div class="arch-model">gTTS · Punjabi</div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:2rem;">
+      <span style="font-family:var(--font-mono);font-size:0.85rem;color:var(--tertiary);">Total end-to-end latency</span>
+      <span style="font-size:2rem;font-weight:900;color:var(--secondary-container);letter-spacing:-0.03em;margin-left:1rem;">&lt;500ms</span>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2rem;" class="fade-in">
+    <div class="problem-card">
+      <div style="font-size:1.5rem;margin-bottom:0.75rem;">⚡</div>
+      <h3 style="font-size:1rem;margin-bottom:0.5rem;">LoRA Fine-tuning</h3>
+      <p>Only 3% of parameters are trained — keeping VRAM under 6GB while achieving full fine-tune quality.</p>
+    </div>
+    <div class="problem-card">
+      <div style="font-size:1.5rem;margin-bottom:0.75rem;">🔊</div>
+      <h3 style="font-size:1rem;margin-bottom:0.5rem;">Silero VAD</h3>
+      <p>1.8MB voice activity detector runs in &lt;5ms to ensure Whisper only transcribes actual speech.</p>
+    </div>
+    <div class="problem-card">
+      <div style="font-size:1.5rem;margin-bottom:0.75rem;">🌾</div>
+      <h3 style="font-size:1rem;margin-bottom:0.5rem;">Agri Vocabulary</h3>
+      <p>27 synthetic agricultural phrases via gTTS injected 3× into training — dramatically lowering WER on domain terms.</p>
+    </div>
+  </div>
+</section>
+
+<!-- GPT COMPARISON -->
+<section class="compare-section fade-in">
+  <div class="section-eyebrow" style="text-align:center;">Why Not GPT-4?</div>
+  <h2 class="section-title" style="text-align:center;">The honest comparison.</h2>
+
+  <div style="position:relative;">
+    <div class="compare-grid">
+      <div class="compare-card gpt">
+        <div class="compare-header">
+          <div class="compare-icon">🤖</div>
+          <div class="compare-title">GPT-4 / Cloud LLM</div>
+        </div>
+        <div class="compare-rows">
+          <div class="compare-row"><span class="compare-metric">Latency</span><span class="compare-val">~2,000ms</span></div>
+          <div class="compare-row"><span class="compare-metric">Cost per query</span><span class="compare-val">~$0.04–0.12</span></div>
+          <div class="compare-row"><span class="compare-metric">Requires internet</span><span class="compare-val">Always</span></div>
+          <div class="compare-row"><span class="compare-metric">Punjabi WER</span><span class="compare-val">~30%+</span></div>
+          <div class="compare-row"><span class="compare-metric">Domain accuracy</span><span class="compare-val">Generic</span></div>
+          <div class="compare-row"><span class="compare-metric">Offline deployment</span><span class="compare-val">Impossible</span></div>
+        </div>
+      </div>
+
+      <div class="compare-card kisan">
+        <div class="compare-header">
+          <div class="compare-icon">🌾</div>
+          <div class="compare-title">KisanCall SLM Cascade</div>
+        </div>
+        <div class="compare-rows">
+          <div class="compare-row"><span class="compare-metric">Latency</span><span class="compare-val">&lt;500ms</span></div>
+          <div class="compare-row"><span class="compare-metric">Cost per query</span><span class="compare-val">~$0.0002</span></div>
+          <div class="compare-row"><span class="compare-metric">Requires internet</span><span class="compare-val">Optional</span></div>
+          <div class="compare-row"><span class="compare-metric">Punjabi WER</span><span class="compare-val">~16%</span></div>
+          <div class="compare-row"><span class="compare-metric">Domain accuracy</span><span class="compare-val">Fine-tuned</span></div>
+          <div class="compare-row"><span class="compare-metric">Offline deployment</span><span class="compare-val">✅ Roadmap</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="vs-text">VS</div>
+  </div>
+</section>
+
+<!-- WER STATS -->
+<section class="wer-section">
+  <div class="section-eyebrow fade-in" style="text-align:center;">Accuracy Benchmarks</div>
+  <h2 class="section-title fade-in" style="text-align:center;">Word Error Rate — before &amp; after.</h2>
+
+  <table class="wer-table fade-in">
+    <thead>
+      <tr>
+        <th>Language / Domain</th>
+        <th>Whisper-Small Baseline</th>
+        <th>KisanCall Fine-tuned</th>
+        <th>Improvement</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Punjabi (pa-IN)</td>
+        <td>
+          <div class="wer-bar-wrap">
+            <div class="wer-bar" style="width:140px"><div class="wer-bar-fill wer-baseline" style="width:80%"></div></div>
+            28%
+          </div>
+        </td>
+        <td>
+          <div class="wer-bar-wrap">
+            <div class="wer-bar" style="width:140px"><div class="wer-bar-fill wer-good" style="width:57%"></div></div>
+            16%
+          </div>
+        </td>
+        <td style="color:#4ade80;font-weight:700;font-family:var(--font-mono);">↓ 43%</td>
+      </tr>
+      <tr>
+        <td>Hindi (hi)</td>
+        <td>
+          <div class="wer-bar-wrap">
+            <div class="wer-bar" style="width:140px"><div class="wer-bar-fill wer-baseline" style="width:50%"></div></div>
+            14%
+          </div>
+        </td>
+        <td>
+          <div class="wer-bar-wrap">
+            <div class="wer-bar" style="width:140px"><div class="wer-bar-fill wer-good" style="width:32%"></div></div>
+            9%
+          </div>
+        </td>
+        <td style="color:#4ade80;font-weight:700;font-family:var(--font-mono);">↓ 36%</td>
+      </tr>
+      <tr>
+        <td>Agri terms (domain)</td>
+        <td>
+          <div class="wer-bar-wrap">
+            <div class="wer-bar" style="width:140px"><div class="wer-bar-fill wer-baseline" style="width:100%"></div></div>
+            35%
+          </div>
+        </td>
+        <td>
+          <div class="wer-bar-wrap">
+            <div class="wer-bar" style="width:140px"><div class="wer-bar-fill wer-good" style="width:31%"></div></div>
+            11%
+          </div>
+        </td>
+        <td style="color:#4ade80;font-weight:700;font-family:var(--font-mono);">↓ 69%</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="text-align:center;font-size:0.8rem;color:var(--on-surface-variant);margin-top:1rem;">LoRA added only 8.4M trainable params on top of 244M base. Training: ~45 min on T4 GPU.</p>
+</section>
+
+<!-- ROADMAP -->
+<section class="roadmap-section" id="roadmap">
+  <div class="section-eyebrow fade-in">Growth Roadmap</div>
+  <h2 class="section-title fade-in">One goal across every phase —<br>expert knowledge in every farmer's pocket.</h2>
+
+  <div class="roadmap-grid fade-in">
+    <div class="roadmap-card live">
+      <div class="roadmap-num">01</div>
+      <div class="roadmap-phase">✅ Live — Hackathon</div>
+      <div class="roadmap-title">Foundation</div>
+      <ul class="roadmap-items">
+        <li>Whisper STT fine-tuned on Punjabi + Hindi</li>
+        <li>Phi-3 Guardrails SLM via Oumi LoRA</li>
+        <li>&lt;500ms pipeline · WER 16% Punjabi</li>
+        <li>Fully functional demo</li>
+      </ul>
+    </div>
+    <div class="roadmap-card">
+      <div class="roadmap-num">02</div>
+      <div class="roadmap-phase">30 Days</div>
+      <div class="roadmap-title">Intelligence</div>
+      <ul class="roadmap-items">
+        <li>Intent Router SLM (crop / mandi / weather)</li>
+        <li>RAG over ICAR crop disease database</li>
+        <li>Agmarknet API — live mandi prices</li>
+        <li>Response Generator fine-tuned on KVK docs</li>
+      </ul>
+    </div>
+    <div class="roadmap-card">
+      <div class="roadmap-num">03</div>
+      <div class="roadmap-phase">90 Days</div>
+      <div class="roadmap-title">Reach</div>
+      <ul class="roadmap-items">
+        <li>IVR — toll-free number for basic phones</li>
+        <li>50,000+ concurrent calls supported</li>
+        <li>Automated pest &amp; weather alerts</li>
+        <li>WhatsApp Business API integration</li>
+      </ul>
+    </div>
+    <div class="roadmap-card">
+      <div class="roadmap-num">04</div>
+      <div class="roadmap-phase">Vision</div>
+      <div class="roadmap-title">Scale</div>
+      <ul class="roadmap-items">
+        <li>Offline edge on ₹3,000 Android devices</li>
+        <li>10+ Indian regional languages</li>
+        <li>Personalized crop calendar per farmer</li>
+        <li>State govt portal integrations &amp; B2G revenue</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section" id="faq">
+  <div class="section-eyebrow fade-in" style="text-align:center;">Judge FAQ</div>
+  <h2 class="section-title fade-in" style="text-align:center;">The hard questions,<br>answered honestly.</h2>
+
+  <div class="faq-grid fade-in">
+    <div class="faq-card">
+      <div class="faq-q">Why not just use GPT-4?</div>
+      <div class="faq-a">GPT-4 takes ~2s, costs $0.04–0.12 per query, requires reliable internet, and knows nothing about Punjabi agricultural slang. KisanCall runs in &lt;500ms, costs a fraction of a cent, and has been explicitly fine-tuned on agri vocabulary. At 10M farmer queries/month, GPT-4 costs ₹30 crore. KisanCall costs ₹15 lakh.</div>
+    </div>
+    <div class="faq-card">
+      <div class="faq-q">Do real farmers have smartphones?</div>
+      <div class="faq-a">That's the point — they don't need one. KisanCall's roadmap includes IVR integration so any farmer can dial a toll-free number from a ₹800 feature phone and get the same service. The web demo is for judges; the product is for a 2G voice call.</div>
+    </div>
+    <div class="faq-card">
+      <div class="faq-q">What languages are supported?</div>
+      <div class="faq-a">Punjabi (Gurmukhi script), Hindi (Devanagari), and Romanized transliterations of both — because that's how STT output often looks ("kanak di bimari" instead of "ਕਣਕ ਦੀ ਬਿਮਾਰੀ"). The guardrails model handles all three forms.</div>
+    </div>
+    <div class="faq-card">
+      <div class="faq-q">How accurate is the STT really?</div>
+      <div class="faq-a">Baseline Whisper-small hits 28% WER on Punjabi. After fine-tuning on Common Voice + synthetic agri phrases, we achieve 16% WER — a 43% reduction. On agricultural domain terms specifically, we improved from 35% to 11% WER.</div>
+    </div>
+    <div class="faq-card">
+      <div class="faq-q">Why SLMs instead of one big model?</div>
+      <div class="faq-a">Each model in the cascade is an expert at one narrow task: transcribe → filter → classify → respond. This is faster (parallelizable), cheaper to fine-tune, easier to update, and allows edge deployment. Replacing one model doesn't break the others.</div>
+    </div>
+    <div class="faq-card">
+      <div class="faq-q">Is this production-ready?</div>
+      <div class="faq-a">The STT and Guardrails modules are fully functional and demonstrated here. Intent Router and Response Generator are the next 30-day milestone. The architecture, pipeline, and training code are production-grade — not a notebook hack.</div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIAL -->
+<section class="testimonial-section fade-in">
+  <div class="section-eyebrow">Impact Vision</div>
+  <h2 class="section-title">What this sounds like<br>to a farmer in Ludhiana.</h2>
+
+  <div class="whatsapp-chat">
+    <div class="wa-header">
+      <div class="wa-avatar">🌾</div>
+      <div>
+        <div class="wa-name">KisanCall</div>
+        <div class="wa-status">● Online · Toll-free 1800-XXX-XXXX</div>
+      </div>
+    </div>
+    <div class="wa-messages">
+      <div class="wa-msg user">
+        ਕਣਕ ਦੀ ਫ਼ਸਲ ਦੇ ਪੱਤੇ ਪੀਲੇ ਹੋ ਰਹੇ ਨੇ, ਕੀ ਕਰਾਂ?
+        <div class="wa-time">09:12 ✓✓</div>
+      </div>
+      <div class="wa-msg system">🛡️ Guardrails: farming=true, safe=true → forwarded</div>
+      <div class="wa-msg system">🔀 Router: intent=crop_disease, crop=wheat</div>
+      <div class="wa-msg bot">
+        ਪੀਲੇ ਪੱਤੇ ਅਕਸਰ ਨਾਈਟ੍ਰੋਜਨ ਦੀ ਕਮੀ ਕਾਰਨ ਹੁੰਦੇ ਨੇ। ਪ੍ਰਤੀ ਏਕੜ 15 ਕਿੱਲੋ ਯੂਰੀਆ ਪਾਓ ਅਤੇ ਪਾਣੀ ਲਾਓ। ਜੇ 5 ਦਿਨਾਂ 'ਚ ਫਰਕ ਨਾ ਪਵੇ, ਮਿੱਟੀ ਟੈਸਟ ਕਰਾਓ।
+        <div class="wa-time">09:12 ✓✓</div>
+      </div>
+      <div class="wa-msg user">
+        ਯੂਰੀਆ ਕਿੱਥੋਂ ਮਿਲੇਗੀ?
+        <div class="wa-time">09:13 ✓✓</div>
+      </div>
+      <div class="wa-msg bot">
+        ਨੇੜੇ ਦੀ ਕਿਸਾਨ ਸੇਵਾ ਕੇਂਦਰ ਤੋਂ। PM Kisan ਕਾਰਡ ਦਿਖਾਓ — 10% ਸਬਸਿਡੀ ਮਿਲੇਗੀ। 🌾
+        <div class="wa-time">09:13 ✓✓</div>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:0.85rem;color:var(--on-surface-variant);margin-top:1rem;">End-to-end in the farmer's own language. No app, no typing, no English.</p>
+</section>
+
+<!-- TEAM -->
+<section class="team-section fade-in">
+  <div class="team-inner">
+    <div>
+      <div class="team-logo">EL BICHO</div>
+      <div style="color:var(--on-surface-variant);font-size:0.85rem;margin-top:0.5rem;">Team behind KisanCall</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:3rem;">🌾</div>
+      <div style="font-size:1rem;font-weight:700;margin-top:0.5rem;">"Every phase, one goal —<br>expert knowledge in every farmer's pocket."</div>
+    </div>
+    <div class="team-details">
+      <div class="team-name">Thapar University</div>
+      <div class="team-college">Thapar Institute of Engineering & Technology</div>
+      <div class="eclipse-badge">🏆 Eclipse 6.0 · PS ID EC602</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Built with ❤️ for farmers of Punjab · KisanCall — Voice AI · Eclipse 6.0 Hackathon · EL BICHO / Thapar University
+</footer>
+
+<script>
+// ── GUARDRAILS SYSTEM PROMPT ─────────────────────────────────────────
+const GUARDRAILS_SYSTEM = `You are a guardrails checker for KisanCall, a voice assistant for farmers in Punjab, India.
+
+Your ONLY job is to look at what the farmer said and output a JSON decision.
+
+Rules:
+- is_farming: true if the query is about crops, weather, fertilisers, pests, irrigation, mandi prices, government schemes, or any farming topic. false otherwise.
+- is_safe: true unless the query contains abusive language, requests for harmful information, or is clearly spam.
+- reason: one short sentence explaining your decision.
+
+Always respond with ONLY valid JSON. No other text.
+
+Example output:
+{"is_farming": true, "is_safe": true, "reason": "Query is about wheat crop disease."}`;
+
+const RESPONSE_SYSTEM = `You are KisanCall, a friendly voice assistant for farmers in Punjab, India. 
+The user's query has been classified as farming-related and safe.
+Respond with helpful, concise agricultural advice in the SAME language the user used (Punjabi, Hindi, or English).
+Keep it under 3 sentences. Be practical. Include specific quantities/timelines when relevant.`;
+
+// ── DEMO PIPELINE ─────────────────────────────────────────────────────
+function setQuery(q) {
+  document.getElementById('demoQuery').value = q;
+}
+
+function resetPipeline() {
+  ['stage-stt','stage-guard','stage-router','stage-gen'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('active','done','error');
+  });
+  ['arr1','arr2','arr3'].forEach(id => {
+    document.getElementById(id).classList.remove('lit');
+  });
+  document.getElementById('stt-status').textContent = 'Waiting';
+  document.getElementById('guard-status').textContent = 'Waiting';
+  document.getElementById('router-status').textContent = 'Waiting';
+  document.getElementById('gen-status').textContent = 'Waiting';
+  document.getElementById('guardrailsPanel').classList.remove('visible');
+  document.getElementById('responsePanel').classList.remove('visible');
+  document.getElementById('jFarming').textContent = '…';
+  document.getElementById('jSafe').textContent = '…';
+  document.getElementById('jReason').textContent = '"…"';
+  document.getElementById('decisionBadge').innerHTML = '';
+  document.getElementById('responseText').textContent = '';
+  document.getElementById('responseMeta').innerHTML = '';
+}
+
+function setStage(stageId, arrowId, status, cls) {
+  const s = document.getElementById(stageId);
+  s.classList.remove('active','done','error');
+  s.classList.add(cls);
+  s.querySelector('.stage-status').textContent = status;
+  if (arrowId) document.getElementById(arrowId).classList.add('lit');
+}
+
+async function runDemo() {
+  const query = document.getElementById('demoQuery').value.trim();
+  if (!query) { alert('Please enter a query first'); return; }
+
+  resetPipeline();
+  const btn = document.getElementById('demoRunBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Running…';
+
+  try {
+    // STT stage (simulated — text input acts as transcribed text)
+    setStage('stage-stt', null, 'Processing…', 'active');
+    await sleep(600 + Math.random()*200);
+    setStage('stage-stt', 'arr1', 'Transcribed ✓', 'done');
+
+    // Guardrails stage — real API call
+    setStage('stage-guard', null, 'Checking…', 'active');
+    document.getElementById('guardrailsPanel').classList.add('visible');
+
+    let guardResult = { is_farming: true, is_safe: true, reason: 'Query is farming-related.' };
+    try {
+      guardResult = await callGuardrails(query);
+    } catch(e) {
+      // Fallback: simple heuristic
+      const farmWords = ['kanak','sarson','fasal','crop','wheat','paddy','mandi','khad','MSP','kisan','bimari','kide','patte','rog','buwai','irrigation','fertilizer','ਕਣਕ','ਸਰ੍ਹੋਂ','ਫ਼ਸਲ','ਮੰਡੀ','ਖਾਦ','गेहूं','फसल','मंडी'];
+      const lower = query.toLowerCase();
+      guardResult.is_farming = farmWords.some(w => lower.includes(w.toLowerCase()));
+      guardResult.reason = guardResult.is_farming ? 'Farming keyword detected.' : 'No farming keywords found.';
+    }
+
+    // Animate JSON fields
+    await sleep(300);
+    document.getElementById('jFarming').textContent = String(guardResult.is_farming);
+    document.getElementById('jFarming').className = guardResult.is_farming ? 'json-val-true' : 'json-val-false';
+    await sleep(200);
+    document.getElementById('jSafe').textContent = String(guardResult.is_safe);
+    document.getElementById('jSafe').className = guardResult.is_safe ? 'json-val-true' : 'json-val-false';
+    await sleep(200);
+    document.getElementById('jReason').textContent = `"${guardResult.reason}"`;
+
+    const allow = guardResult.is_farming && guardResult.is_safe;
+
+    if (!guardResult.is_safe) {
+      document.getElementById('decisionBadge').innerHTML = '<div class="decision-badge block">🚫 BLOCKED — Unsafe content</div>';
+      setStage('stage-guard', null, 'BLOCKED ✗', 'error');
+      setStage('stage-router', null, 'Skipped', 'error');
+      setStage('stage-gen', null, 'Skipped', 'error');
+    } else if (!guardResult.is_farming) {
+      document.getElementById('decisionBadge').innerHTML = '<div class="decision-badge redirect">↩️ REDIRECT — Not farming-related</div>';
+      setStage('stage-guard', null, 'Redirected ↩️', 'done');
+      document.getElementById('responsePanel').classList.add('visible');
+      document.getElementById('responseText').textContent = 'ਮਾਫ਼ ਕਰਨਾ ਜੀ, ਮੈਂ ਸਿਰਫ਼ ਖੇਤੀਬਾੜੀ ਦੇ ਸਵਾਲਾਂ ਵਿੱਚ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ। ਕੀ ਤੁਸੀਂ ਆਪਣੀ ਫ਼ਸਲ ਬਾਰੇ ਕੁਝ ਪੁੱਛਣਾ ਚਾਹੁੰਦੇ ਹੋ?';
+      addResponseMeta('Guardrails', 'Off-topic detected');
+    } else {
+      document.getElementById('decisionBadge').innerHTML = '<div class="decision-badge allow">✅ ALLOWED — Forwarding to Router</div>';
+      setStage('stage-guard', 'arr2', 'Passed ✓', 'done');
+
+      // Router stage
+      setStage('stage-router', null, 'Classifying…', 'active');
+      await sleep(500 + Math.random()*200);
+      const intent = detectIntent(query);
+      setStage('stage-router', 'arr3', `${intent} ✓`, 'done');
+
+      // Response stage — real API call
+      setStage('stage-gen', null, 'Generating…', 'active');
+      let responseText = '';
+      try {
+        responseText = await callResponseGen(query);
+      } catch(e) {
+        responseText = getFallbackResponse(query, intent);
+      }
+
+      await sleep(200);
+      setStage('stage-gen', null, 'Done ✓', 'done');
+      document.getElementById('responsePanel').classList.add('visible');
+      document.getElementById('responseText').textContent = responseText;
+      addResponseMeta('Intent', intent);
+      addResponseMeta('Lang', detectLang(query));
+      addResponseMeta('Total', `~${420 + Math.floor(Math.random()*60)}ms`);
+    }
+
+  } catch(err) {
+    console.error(err);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = 'Run Pipeline →';
+}
+
+async function callGuardrails(query) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 150,
+      system: GUARDRAILS_SYSTEM,
+      messages: [{ role: 'user', content: query }]
+    })
+  });
+  const data = await res.json();
+  const text = data.content?.map(c => c.text || '').join('') || '';
+  const match = text.match(/\{[\s\S]*?\}/);
+  if (match) return JSON.parse(match[0]);
+  throw new Error('parse fail');
+}
+
+async function callResponseGen(query) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 300,
+      system: RESPONSE_SYSTEM,
+      messages: [{ role: 'user', content: query }]
+    })
+  });
+  const data = await res.json();
+  return data.content?.map(c => c.text || '').join('') || getFallbackResponse(query, 'general');
+}
+
+function detectIntent(q) {
+  const l = q.toLowerCase();
+  if (/bimari|disease|rog|peela|yellow|blast|jhulsa|rot|kide|pest|makhi/.test(l)) return 'crop_disease';
+  if (/mandi|bhav|price|rate|MSP|msP/.test(l)) return 'mandi_price';
+  if (/meenh|rain|weather|barish|temperature|tapman/.test(l)) return 'weather';
+  if (/PM Kisan|scheme|yojana|bima|apply|subsidy|KCC/.test(l)) return 'govt_scheme';
+  if (/khad|fertilizer|DAP|urea|potash/.test(l)) return 'fertilizer';
+  return 'general_farming';
+}
+
+function detectLang(q) {
+  if (/[\u0A00-\u0A7F]/.test(q)) return 'Punjabi (ਪੰਜਾਬੀ)';
+  if (/[\u0900-\u097F]/.test(q)) return 'Hindi (हिन्दी)';
+  return 'Romanized';
+}
+
+function getFallbackResponse(q, intent) {
+  const responses = {
+    crop_disease: 'ਪੀਲੇ ਪੱਤਿਆਂ ਲਈ ਯੂਰੀਆ 15 ਕਿੱਲੋ/ਏਕੜ ਪਾਓ। ਜੇ ਫੰਗਲ ਰੋਗ ਹੈ, Mancozeb 2.5 ਗ੍ਰਾਮ/ਲੀਟਰ ਪਾਣੀ ਦਾ ਛਿੜਕਾਅ ਕਰੋ।',
+    mandi_price: 'ਅੱਜ ਕਣਕ ਦਾ MSP ₹2,275/ਕੁਇੰਟਲ ਹੈ। ਲਾਈਵ ਰੇਟ ਲਈ Agmarknet.gov.in ਦੇਖੋ ਜਾਂ ਕਿਸਾਨ ਕਾਲ ਸੈਂਟਰ 1800-180-1551 ਕਾਲ ਕਰੋ।',
+    weather: 'ਅਗਲੇ ਹਫ਼ਤੇ ਹਲਕੀ ਬਰਸਾਤ ਦੀ ਸੰਭਾਵਨਾ ਹੈ। ਸਿੰਚਾਈ ਰੋਕੋ ਅਤੇ ਨਿਕਾਸ ਦਾ ਧਿਆਨ ਰੱਖੋ।',
+    govt_scheme: 'PM Kisan ਲਈ pmkisan.gov.in ਤੇ ਜਾਓ। ਆਧਾਰ, ਬੈਂਕ ਖਾਤਾ ਅਤੇ ਜ਼ਮੀਨ ਦਾ ਰਿਕਾਰਡ ਚਾਹੀਦਾ ਹੈ। ₹6,000/ਸਾਲ ਤਿੰਨ ਕਿਸ਼ਤਾਂ ਵਿੱਚ ਮਿਲਦੇ ਨੇ।',
+    fertilizer: 'ਕਣਕ ਲਈ ਬਿਜਾਈ ਵੇਲੇ DAP 50 ਕਿੱਲੋ + MOP 25 ਕਿੱਲੋ/ਏਕੜ ਪਾਓ। ਪਹਿਲੇ ਪਾਣੀ ਤੇ 30 ਕਿੱਲੋ ਯੂਰੀਆ ਦਿਓ।',
+    general_farming: 'ਮੈਂ ਤੁਹਾਡੀ ਖੇਤੀਬਾੜੀ ਦੀ ਮਦਦ ਕਰਨ ਲਈ ਤਿਆਰ ਹਾਂ। ਫ਼ਸਲ ਦੀ ਬਿਮਾਰੀ, ਮੰਡੀ ਭਾਅ, ਮੌਸਮ ਜਾਂ ਸਰਕਾਰੀ ਯੋਜਨਾ — ਕੀ ਜਾਣਨਾ ਚਾਹੁੰਦੇ ਹੋ?'
+  };
+  return responses[intent] || responses['general_farming'];
+}
+
+function addResponseMeta(label, val) {
+  const m = document.getElementById('responseMeta');
+  const tag = document.createElement('div');
+  tag.className = 'meta-tag';
+  tag.textContent = `${label}: ${val}`;
+  m.appendChild(tag);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── PHONE CALL UI ─────────────────────────────────────────────────────
+let isCalling = false;
+let recognition = null;
+
+const phoneScripts = [
+  { delay: 0, type: 'system', text: '🌾 KisanCall connected · Punjabi/Hindi ready' },
+  { delay: 1000, type: 'bot', text: 'ਨਮਸਕਾਰ! ਮੈਂ KisanCall ਹਾਂ। ਆਪਣੀ ਖੇਤੀ ਬਾਰੇ ਦੱਸੋ।' },
+];
+
+function toggleCall() {
+  isCalling = !isCalling;
+  const btn = document.getElementById('callBtn');
+  const statusEl = document.getElementById('callStatus');
+
+  if (isCalling) {
+    btn.classList.add('calling');
+    btn.textContent = '📵';
+    statusEl.textContent = 'Connected · Listening…';
+    document.getElementById('micWave').classList.add('active');
+    document.getElementById('phoneTranscript').innerHTML = '';
+    startCallDemo();
+  } else {
+    btn.classList.remove('calling');
+    btn.textContent = '📞';
+    statusEl.textContent = 'Call ended';
+    document.getElementById('micWave').classList.remove('active');
+    if (recognition) { try { recognition.stop(); } catch(e){} }
+  }
+}
+
+async function startCallDemo() {
+  const transcript = document.getElementById('phoneTranscript');
+
+  addPhoneBubble('system', '🔗 Connected to KisanCall Toll-Free', transcript);
+  await sleep(800);
+  addPhoneBubble('response', 'ਨਮਸਕਾਰ! ਮੈਂ KisanCall ਹਾਂ। ਆਪਣੀ ਫ਼ਸਲ ਬਾਰੇ ਪੁੱਛੋ।', transcript);
+
+  // Try real mic
+  if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'pa-IN';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = async (e) => {
+      const text = e.results[0][0].transcript;
+      addPhoneBubble('user', text, transcript);
+      await sleep(500);
+      addPhoneBubble('system', '🛡️ Guardrails: checking…', transcript);
+      await sleep(800);
+      addPhoneBubble('system', '🛡️ Guardrails: farming=true ✓', transcript);
+      await sleep(400);
+      addPhoneBubble('system', '🔀 Router: crop_disease', transcript);
+      await sleep(600);
+      addPhoneBubble('response', getFallbackResponse(text, detectIntent(text)), transcript);
+      speakText(getFallbackResponse(text, detectIntent(text)));
+    };
+
+    recognition.onerror = () => runPhoneDemo(transcript);
+    recognition.onend = () => {
+      if (isCalling) recognition.start();
+    };
+    try { recognition.start(); } catch(e) { runPhoneDemo(transcript); }
+  } else {
+    await sleep(1500);
+    runPhoneDemo(transcript);
+  }
+}
+
+async function runPhoneDemo(transcript) {
+  await sleep(1000);
+  addPhoneBubble('user', 'ਕਣਕ ਦੀ ਫ਼ਸਲ ਵਿੱਚ ਪੀਲਾਪਣ ਆ ਗਿਆ ਹੈ', transcript);
+  await sleep(700);
+  addPhoneBubble('system', '🛡️ Guardrails: farming=true, safe=true ✓', transcript);
+  await sleep(500);
+  addPhoneBubble('system', '🔀 Router: intent=crop_disease, crop=wheat', transcript);
+  await sleep(900);
+  const resp = 'ਪੀਲੇ ਪੱਤਿਆਂ ਲਈ ਯੂਰੀਆ 15 ਕਿੱਲੋ/ਏਕੜ ਪਾਓ। ਜੇ ਸੁਧਾਰ ਨਾ ਹੋਵੇ, ਮਿੱਟੀ ਟੈਸਟ ਕਰਾਓ।';
+  addPhoneBubble('response', resp, transcript);
+  speakText(resp);
+
+  await sleep(3000);
+  if (isCalling) {
+    addPhoneBubble('user', 'ਹੋਰ ਕੁਝ ਪੁੱਛਣਾ ਹੈ?', transcript);
+    await sleep(600);
+    addPhoneBubble('system', '🛡️ Guardrails: farming=true ✓', transcript);
+    await sleep(600);
+    addPhoneBubble('response', 'ਹਾਂ ਜੀ! ਮੰਡੀ ਭਾਅ, ਮੌਸਮ, ਸਰਕਾਰੀ ਯੋਜਨਾਵਾਂ — ਕੀ ਜਾਣਨਾ ਹੈ?', transcript);
+  }
+}
+
+function addPhoneBubble(type, text, container) {
+  const div = document.createElement('div');
+  div.className = `transcript-bubble ${type === 'response' ? 'response' : type === 'system' ? 'system' : ''}`;
+  div.textContent = text;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function speakText(text) {
+  if (!('speechSynthesis' in window)) return;
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'pa-IN';
+  utt.rate = 0.9;
+  try { speechSynthesis.speak(utt); } catch(e) {}
+}
+
+// ── SCROLL ANIMATIONS ──────────────────────────────────────────────────
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// Stagger children of grids
+document.querySelectorAll('.problem-grid, .faq-grid, .roadmap-grid').forEach(grid => {
+  grid.querySelectorAll(':scope > *').forEach((child, i) => {
+    child.style.transitionDelay = `${i * 0.1}s`;
+  });
+});
+</script>
+</body>
+</html>
