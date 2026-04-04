@@ -29,6 +29,9 @@ app.add_middleware(
 # Initialize engines lazily
 engines = {}
 
+class TextQuery(BaseModel):
+    query: str
+
 def get_engines():
     if not engines:
         print("Initializing SLM pipeline engines...")
@@ -138,6 +141,99 @@ async def process_audio(audio: UploadFile = File(...)):
     return {
         "text": query_text,
         "language": lang,
+        "is_farming": guard_res.get("is_farming", True),
+        "is_safe": guard_res.get("is_safe", True),
+        "reason": guard_res.get("reason", "Checks passed."),
+        "decision": "ALLOW",
+        "intent": intent,
+        "response": final_response,
+        "audio_base64": audio_base64,
+        "latencies": latencies
+    }
+
+@app.post("/process_text")
+async def process_text(payload: TextQuery):
+    """
+    Text-only pipeline bypassing STT:
+    Guardrails -> Router -> Response -> TTS
+    """
+    start_total = time.perf_counter()
+    engs = get_engines()
+    
+    query_text = payload.query
+    if not query_text:
+        return {"error": "Empty query"}
+        
+    latencies = {}
+    lang = "Romanized" # Default for text
+    
+    # Check language script roughly
+    if any("\u0a00" <= c <= "\u0a7f" for c in query_text):
+        lang = "Punjabi"
+    elif any("\u0900" <= c <= "\u097f" for c in query_text):
+        lang = "Hindi"
+
+    # 1. Guardrails
+    guard_res = engs["guardrails"].classify(query_text)
+    latencies["guardrails"] = guard_res["latency_ms"]
+    
+    if guard_res["decision"] == "BLOCK":
+        return {
+            "text": query_text,
+            "decision": "BLOCK",
+            "is_farming": guard_res.get("is_farming", False),
+            "is_safe": guard_res.get("is_safe", False),
+            "reason": guard_res.get("reason", "Unsafe content"),
+            "latencies": latencies,
+            "response": "ਮਾਫ ਕਰਨਾ, ਮੈਂ ਤੁਹਾਡੀ ਮਦਦ ਨਹੀਂ ਕਰ ਸਕਦਾ। (Sorry, I cannot help with this.)"
+        }
+    elif guard_res["decision"] == "REDIRECT":
+        return {
+            "text": query_text,
+            "decision": "REDIRECT",
+            "is_farming": guard_res.get("is_farming", False),
+            "is_safe": guard_res.get("is_safe", True),
+            "reason": guard_res.get("reason", "Not farming related"),
+            "latencies": latencies,
+            "response": "ਮੈਂ ਸਿਰਫ ਖੇਤੀਬਾੜੀ ਬਾਰੇ ਜਾਣਕਾਰੀ ਦੇ ਸਕਦਾ ਹਾਂ। (I can only provide agricultural info.)"
+        }
+        
+    # 2. Router
+    router_res = engs["router"].route(query_text)
+    latencies["router"] = router_res["latency_ms"]
+    intent = router_res["intent"]
+    
+    # 3. Response
+    context = ""
+    resp_res = engs["response"].generate(query_text, intent, context)
+    latencies["response"] = resp_res["latency_ms"]
+    final_response = resp_res["response"]
+    
+    # 4. TTS fallback
+    audio_base64 = None
+    try:
+        from gtts import gTTS
+        tts_start = time.perf_counter()
+        lang_code = "pa" if "pa" in lang.lower() or "punjabi" in lang.lower() else "hi"
+        tts = gTTS(text=final_response, lang=lang_code)
+        import io
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        import base64
+        audio_base64 = base64.b64encode(fp.getvalue()).decode()
+        latencies["tts"] = round((time.perf_counter() - tts_start) * 1000, 1)
+    except Exception as e:
+        print(f"TTS Error: {e}")
+
+    total_latency = round((time.perf_counter() - start_total) * 1000, 1)
+    latencies["total"] = total_latency
+
+    return {
+        "text": query_text,
+        "language": lang,
+        "is_farming": guard_res.get("is_farming", True),
+        "is_safe": guard_res.get("is_safe", True),
+        "reason": guard_res.get("reason", "Checks passed."),
         "decision": "ALLOW",
         "intent": intent,
         "response": final_response,

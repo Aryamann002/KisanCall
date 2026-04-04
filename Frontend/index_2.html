@@ -2065,75 +2065,72 @@ async function runDemo() {
   btn.innerHTML = '<span class="spinner"></span>Running…';
 
   try {
-    // STT stage (simulated — text input acts as transcribed text)
+    // 1. Fetch full pipeline response from Backend upfront
     setStage('stage-stt', null, 'Processing…', 'active');
-    await sleep(600 + Math.random()*200);
-    setStage('stage-stt', 'arr1', 'Transcribed ✓', 'done');
+    const backendData = await callLocalBackend(query);
 
-    // Guardrails stage — real API call
+    // 2. Animate STT stage
+    await sleep(400); // Simulate audio processing time visually
+    const sttLatency = backendData.latencies?.stt || 120;
+    setStage('stage-stt', 'arr1', `Transcribed ✓ (${sttLatency}ms)`, 'done');
+
+    // 3. Animate Guardrails stage
     setStage('stage-guard', null, 'Checking…', 'active');
     document.getElementById('guardrailsPanel').classList.add('visible');
 
-    let guardResult = { is_farming: true, is_safe: true, reason: 'Query is farming-related.' };
-    try {
-      guardResult = await callGuardrails(query);
-    } catch(e) {
-      // Fallback: simple heuristic
-      const farmWords = ['kanak','sarson','fasal','crop','wheat','paddy','mandi','khad','MSP','kisan','bimari','kide','patte','rog','buwai','irrigation','fertilizer','ਕਣਕ','ਸਰ੍ਹੋਂ','ਫ਼ਸਲ','ਮੰਡੀ','ਖਾਦ','गेहूं','फसल','मंडी'];
-      const lower = query.toLowerCase();
-      guardResult.is_farming = farmWords.some(w => lower.includes(w.toLowerCase()));
-      guardResult.reason = guardResult.is_farming ? 'Farming keyword detected.' : 'No farming keywords found.';
-    }
-
-    // Animate JSON fields
     await sleep(300);
-    document.getElementById('jFarming').textContent = String(guardResult.is_farming);
-    document.getElementById('jFarming').className = guardResult.is_farming ? 'json-val-true' : 'json-val-false';
+    document.getElementById('jFarming').textContent = String(backendData.is_farming);
+    document.getElementById('jFarming').className = backendData.is_farming ? 'json-val-true' : 'json-val-false';
     await sleep(200);
-    document.getElementById('jSafe').textContent = String(guardResult.is_safe);
-    document.getElementById('jSafe').className = guardResult.is_safe ? 'json-val-true' : 'json-val-false';
+    document.getElementById('jSafe').textContent = String(backendData.is_safe);
+    document.getElementById('jSafe').className = backendData.is_safe ? 'json-val-true' : 'json-val-false';
     await sleep(200);
-    document.getElementById('jReason').textContent = `"${guardResult.reason}"`;
+    document.getElementById('jReason').textContent = `"${backendData.reason}"`;
 
-    const allow = guardResult.is_farming && guardResult.is_safe;
+    const guardLatency = backendData.latencies?.guardrails || 45;
 
-    if (!guardResult.is_safe) {
+    if (backendData.decision === "BLOCK") {
       document.getElementById('decisionBadge').innerHTML = '<div class="decision-badge block">🚫 BLOCKED — Unsafe content</div>';
-      setStage('stage-guard', null, 'BLOCKED ✗', 'error');
+      setStage('stage-guard', null, `BLOCKED ✗ (${guardLatency}ms)`, 'error');
       setStage('stage-router', null, 'Skipped', 'error');
       setStage('stage-gen', null, 'Skipped', 'error');
-    } else if (!guardResult.is_farming) {
+    } else if (backendData.decision === "REDIRECT") {
       document.getElementById('decisionBadge').innerHTML = '<div class="decision-badge redirect">↩️ REDIRECT — Not farming-related</div>';
-      setStage('stage-guard', null, 'Redirected ↩️', 'done');
+      setStage('stage-guard', null, `Redirected ↩️ (${guardLatency}ms)`, 'done');
       document.getElementById('responsePanel').classList.add('visible');
-      document.getElementById('responseText').textContent = 'ਮਾਫ਼ ਕਰਨਾ ਜੀ, ਮੈਂ ਸਿਰਫ਼ ਖੇਤੀਬਾੜੀ ਦੇ ਸਵਾਲਾਂ ਵਿੱਚ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ। ਕੀ ਤੁਸੀਂ ਆਪਣੀ ਫ਼ਸਲ ਬਾਰੇ ਕੁਝ ਪੁੱਛਣਾ ਚਾਹੁੰਦੇ ਹੋ?';
+      document.getElementById('responseText').textContent = backendData.response;
       addResponseMeta('Guardrails', 'Off-topic detected');
     } else {
       document.getElementById('decisionBadge').innerHTML = '<div class="decision-badge allow">✅ ALLOWED — Forwarding to Router</div>';
-      setStage('stage-guard', 'arr2', 'Passed ✓', 'done');
+      setStage('stage-guard', 'arr2', `Passed ✓ (${guardLatency}ms)`, 'done');
 
-      // Router stage
+      // 4. Animate Router stage
       setStage('stage-router', null, 'Classifying…', 'active');
-      await sleep(500 + Math.random()*200);
-      const intent = detectIntent(query);
-      setStage('stage-router', 'arr3', `${intent} ✓`, 'done');
+      await sleep(300);
+      const routerLatency = backendData.latencies?.router || 30;
+      setStage('stage-router', 'arr3', `${backendData.intent} ✓ (${routerLatency}ms)`, 'done');
 
-      // Response stage — real API call
+      // 5. Animate Response stage
       setStage('stage-gen', null, 'Generating…', 'active');
-      let responseText = '';
-      try {
-        responseText = await callResponseGen(query);
-      } catch(e) {
-        responseText = getFallbackResponse(query, intent);
-      }
-
-      await sleep(200);
-      setStage('stage-gen', null, 'Done ✓', 'done');
+      
+      await sleep(300);
+      const respLatency = backendData.latencies?.response || 250;
+      setStage('stage-gen', null, `Done ✓ (${respLatency}ms)`, 'done');
       document.getElementById('responsePanel').classList.add('visible');
-      document.getElementById('responseText').textContent = responseText;
-      addResponseMeta('Intent', intent);
-      addResponseMeta('Lang', detectLang(query));
-      addResponseMeta('Total', `~${420 + Math.floor(Math.random()*60)}ms`);
+      document.getElementById('responseText').textContent = backendData.response;
+      addResponseMeta('Intent', backendData.intent);
+      addResponseMeta('Lang', backendData.language);
+      
+      const totalLatency = backendData.latencies?.total || ((sttLatency+guardLatency+routerLatency+respLatency)*1.2).toFixed(1);
+      addResponseMeta('Total Latency', `${totalLatency}ms`);
+      
+      // Play Audio if returned by backend TTS
+      if (backendData.audio_base64) {
+         try {
+             const snd = new Audio("data:audio/mp3;base64," + backendData.audio_base64);
+             snd.play();
+         } catch(e) {}
+      }
     }
 
   } catch(err) {
@@ -2144,37 +2141,30 @@ async function runDemo() {
   btn.innerHTML = 'Run Pipeline →';
 }
 
-async function callGuardrails(query) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 150,
-      system: GUARDRAILS_SYSTEM,
-      messages: [{ role: 'user', content: query }]
-    })
-  });
-  const data = await res.json();
-  const text = data.content?.map(c => c.text || '').join('') || '';
-  const match = text.match(/\{[\s\S]*?\}/);
-  if (match) return JSON.parse(match[0]);
-  throw new Error('parse fail');
-}
-
-async function callResponseGen(query) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 300,
-      system: RESPONSE_SYSTEM,
-      messages: [{ role: 'user', content: query }]
-    })
-  });
-  const data = await res.json();
-  return data.content?.map(c => c.text || '').join('') || getFallbackResponse(query, 'general');
+async function callLocalBackend(queryText) {
+  try {
+    const res = await fetch('http://localhost:8000/process_text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: queryText })
+    });
+    if (!res.ok) throw new Error('API error');
+    return await res.json();
+  } catch (err) {
+    console.error('Local backend failed, falling back to simulated output.', err);
+    // Fallback simulated response
+    return {
+      text: queryText,
+      decision: "ALLOW",
+      is_farming: true,
+      is_safe: true,
+      reason: "Simulated fallback",
+      intent: detectIntent(queryText),
+      response: getFallbackResponse(queryText, detectIntent(queryText)),
+      language: detectLang(queryText),
+      latencies: { stt: 120, guardrails: 45, router: 30, response: 250, total: 445 }
+    };
+  }
 }
 
 function detectIntent(q) {
@@ -2263,15 +2253,29 @@ async function startCallDemo() {
     recognition.onresult = async (e) => {
       const text = e.results[0][0].transcript;
       addPhoneBubble('user', text, transcript);
+      
+      const backendData = await callLocalBackend(text);
+      
       await sleep(500);
-      addPhoneBubble('system', '🛡️ Guardrails: checking…', transcript);
-      await sleep(800);
-      addPhoneBubble('system', '🛡️ Guardrails: farming=true ✓', transcript);
-      await sleep(400);
-      addPhoneBubble('system', '🔀 Router: crop_disease', transcript);
-      await sleep(600);
-      addPhoneBubble('response', getFallbackResponse(text, detectIntent(text)), transcript);
-      speakText(getFallbackResponse(text, detectIntent(text)));
+      let guardResultText = backendData.is_farming ? 'farming=true ✓' : 'farming=false ✗';
+      addPhoneBubble('system', `🛡️ Guardrails: ${guardResultText}`, transcript);
+      
+      if (backendData.decision === "ALLOW") {
+          await sleep(400);
+          addPhoneBubble('system', `🔀 Router: ${backendData.intent}`, transcript);
+          await sleep(600);
+      }
+      
+      addPhoneBubble('response', backendData.response, transcript);
+      
+      if (backendData.audio_base64) {
+         try {
+             const snd = new Audio("data:audio/mp3;base64," + backendData.audio_base64);
+             snd.play();
+         } catch(e) {}
+      } else {
+         speakText(backendData.response);
+      }
     };
 
     recognition.onerror = () => runPhoneDemo(transcript);
