@@ -8,7 +8,7 @@ class GuardrailsEngine:
     Uses Oumi framework for inference if available.
     """
     
-    def __init__(self, model_dir: str = "guardrails/model/guardrails-phi3-mini", use_mock: bool = False):
+    def __init__(self, model_dir: str = "guardrails/model/guardrails-phi3-mini", use_mock: bool = False, base_model=None, tokenizer=None):
         self.use_mock = use_mock
         if self.use_mock:
             print("GuardrailsEngine initialized in MOCK mode (faster testing)")
@@ -16,23 +16,16 @@ class GuardrailsEngine:
             
         print(f"Loading Guardrails SLM from {model_dir}...")
         try:
-            import torch
-            from transformers import AutoModelForCausalLM, AutoTokenizer
-            from peft import PeftModel
+            # Load LoRA adapters or fallback to ZERO-SHOT base model
+            import os
+            if os.path.isdir(model_dir):
+                self.model = PeftModel.from_pretrained(base_model, model_dir)
+                print("Guardrails SLM loaded with LoRA successfully.")
+            else:
+                self.model = base_model
+                print(f"LoRA directory missing ({model_dir}). Using ZERO-SHOT Base Phi-3 for Guardrails!")
             
-            # Load base model in 4-bit (to fit in 6GB VRAM alongside Whisper)
-            self.tokenizer = AutoTokenizer.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
-            base_model = AutoModelForCausalLM.from_pretrained(
-                "microsoft/Phi-3-mini-4k-instruct",
-                device_map="auto",
-                load_in_4bit=True,
-                trust_remote_code=True
-            )
-            
-            # Load LoRA adapters
-            self.model = PeftModel.from_pretrained(base_model, model_dir)
             self.model.eval()
-            print("Guardrails SLM loaded successfully.")
         except Exception as e:
             print(f"Failed to load Guardrails SLM: {e}")
             print("Falling back to MOCK mode.")

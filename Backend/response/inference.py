@@ -7,7 +7,7 @@ class ResponseEngine:
     Generates concise agricultural advice in the user's language based on intent.
     """
     
-    def __init__(self, model_dir: str = "response/model/response-phi3-mini", use_mock: bool = False):
+    def __init__(self, model_dir: str = "response/model/response-phi3-mini", use_mock: bool = False, base_model=None, tokenizer=None):
         self.use_mock = use_mock
         if self.use_mock:
             print("ResponseEngine initialized in MOCK mode")
@@ -15,21 +15,16 @@ class ResponseEngine:
             
         print(f"Loading Response Generator SLM from {model_dir}...")
         try:
-            import torch
-            from transformers import AutoModelForCausalLM, AutoTokenizer
-            from peft import PeftModel
-            
-            self.tokenizer = AutoTokenizer.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
-            base_model = AutoModelForCausalLM.from_pretrained(
-                "microsoft/Phi-3-mini-4k-instruct",
-                device_map="auto",
-                load_in_4bit=True,
-                trust_remote_code=True
-            )
-            
-            self.model = PeftModel.from_pretrained(base_model, model_dir)
+            # Load LoRA adapters or fallback to ZERO-SHOT base model
+            import os
+            if os.path.isdir(model_dir):
+                self.model = PeftModel.from_pretrained(base_model, model_dir)
+                print("Response SLM loaded with LoRA successfully.")
+            else:
+                self.model = base_model
+                print(f"LoRA directory missing ({model_dir}). Using ZERO-SHOT Base Phi-3 for ResponseEngine!")
+
             self.model.eval()
-            print("Response SLM loaded successfully.")
         except Exception as e:
             print(f"Failed to load Response SLM: {e}")
             self.use_mock = True

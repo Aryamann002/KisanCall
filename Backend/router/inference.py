@@ -8,7 +8,7 @@ class RouterEngine:
     Classifies queries into: crop_disease, weather, mandi_price, or govt_scheme.
     """
     
-    def __init__(self, model_dir: str = "router/model/router-phi3-mini", use_mock: bool = False):
+    def __init__(self, model_dir: str = "router/model/router-phi3-mini", use_mock: bool = False, base_model=None, tokenizer=None):
         self.use_mock = use_mock
         if self.use_mock:
             print("RouterEngine initialized in MOCK mode")
@@ -16,21 +16,16 @@ class RouterEngine:
             
         print(f"Loading Intent Router SLM from {model_dir}...")
         try:
-            import torch
-            from transformers import AutoModelForCausalLM, AutoTokenizer
-            from peft import PeftModel
-            
-            self.tokenizer = AutoTokenizer.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
-            base_model = AutoModelForCausalLM.from_pretrained(
-                "microsoft/Phi-3-mini-4k-instruct",
-                device_map="auto",
-                load_in_4bit=True,
-                trust_remote_code=True
-            )
-            
-            self.model = PeftModel.from_pretrained(base_model, model_dir)
+            # Load LoRA adapters or fallback to ZERO-SHOT base model
+            import os
+            if os.path.isdir(model_dir):
+                self.model = PeftModel.from_pretrained(base_model, model_dir)
+                print("Router SLM loaded with LoRA successfully.")
+            else:
+                self.model = base_model
+                print(f"LoRA directory missing ({model_dir}). Using ZERO-SHOT Base Phi-3 for Router!")
+
             self.model.eval()
-            print("Router SLM loaded successfully.")
         except Exception as e:
             print(f"Failed to load Router SLM: {e}")
             self.use_mock = True

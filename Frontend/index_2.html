@@ -2207,85 +2207,110 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ── PHONE CALL UI ─────────────────────────────────────────────────────
 let isCalling = false;
-let recognition = null;
+let mediaRecorder = null;
+let audioChunks = [];
 
-const phoneScripts = [
-  { delay: 0, type: 'system', text: '🌾 KisanCall connected · Punjabi/Hindi ready' },
-  { delay: 1000, type: 'bot', text: 'ਨਮਸਕਾਰ! ਮੈਂ KisanCall ਹਾਂ। ਆਪਣੀ ਖੇਤੀ ਬਾਰੇ ਦੱਸੋ।' },
-];
+async function callProcessAudio(blob) {
+  try {
+    const formData = new FormData();
+    formData.append("audio", blob, "recording.wav");
+    
+    const res = await fetch('http://localhost:8000/process_audio', {
+      method: 'POST',
+      body: formData
+    });
+    if (!res.ok) throw new Error('API error');
+    return await res.json();
+  } catch (err) {
+    console.error('Local backend failed for process_audio.', err);
+    return null;
+  }
+}
 
-function toggleCall() {
+async function toggleCall() {
   isCalling = !isCalling;
   const btn = document.getElementById('callBtn');
   const statusEl = document.getElementById('callStatus');
 
   if (isCalling) {
     btn.classList.add('calling');
-    btn.textContent = '📵';
-    statusEl.textContent = 'Connected · Listening…';
+    btn.textContent = '⏹️';
+    statusEl.textContent = 'Listening... (Click to Send)';
     document.getElementById('micWave').classList.add('active');
-    document.getElementById('phoneTranscript').innerHTML = '';
-    startCallDemo();
+    
+    const transcript = document.getElementById('phoneTranscript');
+    transcript.innerHTML = '';
+    addPhoneBubble('system', '🔗 Connected to KisanCall Toll-Free', transcript);
+    await sleep(800);
+    addPhoneBubble('response', 'ਨਮਸਕਾਰ! ਮੈਂ KisanCall ਹਾਂ। ਆਪਣੀ ਫ਼ਸਲ ਬਾਰੇ ਪੁੱਛੋ।', transcript);
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) audioChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        statusEl.textContent = 'Processing...';
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        
+        // Call the mighty real backend
+        const backendData = await callProcessAudio(audioBlob);
+        
+        btn.classList.remove('calling');
+        btn.textContent = '📞';
+        statusEl.textContent = 'Ready to call';
+        document.getElementById('micWave').classList.remove('active');
+        
+        if (!backendData || backendData.error) {
+            addPhoneBubble('system', '❌ Error connecting to offline pipeline', transcript);
+            return;
+        }
+
+        // Render UI Pipeline properly
+        addPhoneBubble('user', `🎤 (STT) "${backendData.text}"`, transcript);
+        await sleep(500);
+        
+        let guardResultText = backendData.is_farming ? 'farming=true ✓' : 'farming=false ✗';
+        addPhoneBubble('system', `🛡️ Guardrails: ${guardResultText}`, transcript);
+        
+        if (backendData.decision === "ALLOW") {
+            await sleep(400);
+            addPhoneBubble('system', `🔀 Router: ${backendData.intent}`, transcript);
+            await sleep(600);
+        }
+        
+        addPhoneBubble('response', backendData.response || backendData.error, transcript);
+        
+        // Play TTS Voice natively
+        if (backendData.audio_base64) {
+           try {
+               const snd = new Audio("data:audio/mp3;base64," + backendData.audio_base64);
+               snd.play();
+           } catch(e) {}
+        }
+        
+        isCalling = false; // reset
+      };
+
+      mediaRecorder.start();
+    } catch (e) {
+      console.error("Mic access denied or error:", e);
+      addPhoneBubble('system', '❌ Microphone access denied.', transcript);
+      btn.classList.remove('calling');
+      btn.textContent = '📞';
+      isCalling = false;
+    }
   } else {
-    btn.classList.remove('calling');
-    btn.textContent = '📞';
-    statusEl.textContent = 'Call ended';
-    document.getElementById('micWave').classList.remove('active');
-    if (recognition) { try { recognition.stop(); } catch(e){} }
-  }
-}
-
-async function startCallDemo() {
-  const transcript = document.getElementById('phoneTranscript');
-
-  addPhoneBubble('system', '🔗 Connected to KisanCall Toll-Free', transcript);
-  await sleep(800);
-  addPhoneBubble('response', 'ਨਮਸਕਾਰ! ਮੈਂ KisanCall ਹਾਂ। ਆਪਣੀ ਫ਼ਸਲ ਬਾਰੇ ਪੁੱਛੋ।', transcript);
-
-  // Try real mic
-  if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.lang = 'pa-IN';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onresult = async (e) => {
-      const text = e.results[0][0].transcript;
-      addPhoneBubble('user', text, transcript);
-      
-      const backendData = await callLocalBackend(text);
-      
-      await sleep(500);
-      let guardResultText = backendData.is_farming ? 'farming=true ✓' : 'farming=false ✗';
-      addPhoneBubble('system', `🛡️ Guardrails: ${guardResultText}`, transcript);
-      
-      if (backendData.decision === "ALLOW") {
-          await sleep(400);
-          addPhoneBubble('system', `🔀 Router: ${backendData.intent}`, transcript);
-          await sleep(600);
-      }
-      
-      addPhoneBubble('response', backendData.response, transcript);
-      
-      if (backendData.audio_base64) {
-         try {
-             const snd = new Audio("data:audio/mp3;base64," + backendData.audio_base64);
-             snd.play();
-         } catch(e) {}
-      } else {
-         speakText(backendData.response);
-      }
-    };
-
-    recognition.onerror = () => runPhoneDemo(transcript);
-    recognition.onend = () => {
-      if (isCalling) recognition.start();
-    };
-    try { recognition.start(); } catch(e) { runPhoneDemo(transcript); }
-  } else {
-    await sleep(1500);
-    runPhoneDemo(transcript);
+    // STOP the recording and fire the event
+    statusEl.textContent = 'Sending Audio to Backend...';
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(t => t.stop());
+    }
   }
 }
 

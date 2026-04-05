@@ -6,10 +6,10 @@
 - **Status**: Code complete, awaiting PyTorch download completion.
 
 ## Active Background Process
-- Installing Backend requirements (PyTorch CUDA 12.1 + SLM packages) via `uv` (with `--prerelease allow`)
-- Command ID: 67b6fa11-57bd-4f9e-8968-c1c754c9598c
+- None. (PyTorch CUDA 12.1 installation completed successfully!)
 
 ## Completed
+- [x] PyTorch + core dependencies installation (completed via `uv`)
 - [x] Phase 1: STT code (Whisper data prep, fine-tune, inference)
 - [x] Phase 2: Guardrails code (Oumi config, data prep, inference logic)
 - [x] Phase 3: Router & Response code (Phi-3 inference routing and generation)

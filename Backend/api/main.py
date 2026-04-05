@@ -46,12 +46,39 @@ class TextQuery(BaseModel):
 def get_engines():
     if not engines:
         print("Initializing SLM pipeline engines...")
-        # Start in MOCK mode first if we don't have the fully fine-tuned models
-        # During the actual execution with models, use_mock=False
-        engines["stt"] = STTEngine(use_faster_whisper=True) if STTEngine else None
-        engines["guardrails"] = GuardrailsEngine(use_mock=True) if GuardrailsEngine else None
-        engines["router"] = RouterEngine(use_mock=True) if RouterEngine else None
-        engines["response"] = ResponseEngine(use_mock=True) if ResponseEngine else None
+        # Check if we need the Phi-3 base model for ANY engine
+        need_phi3 = False
+        try:
+            # We don't have access to the instances yet, but we know if use_mock=False was hardcoded for any of them
+            # GuardrailsEngine, RouterEngine, ResponseEngine are imported.
+            # We'll just instantiate them, but handle the base model initialization first.
+            engines["stt"] = STTEngine(use_faster_whisper=True) if STTEngine else None
+            
+            # Since the user might set use_mock=False manually in the code, 
+            # we will pre-load the base model if ANY of them are missing it.
+            # But wait, it's safer to just instantiate them sequentially. If they don't find the LoRA, they fall back.
+            # Let's load the base model ONCE and pass it to all of them.
+            base_model = None
+            tokenizer = None
+            # We unconditionally load the Shared Alpha Phi-3 Base Model
+            # to feed into the 3 engines. If LoRA is missing, they will Zero-Shot fallback.
+            print("Loading Shared Phi-3 Base Model into VRAM for Zero-Shot & LoRA...")
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+            tokenizer = AutoTokenizer.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
+            base_model = AutoModelForCausalLM.from_pretrained(
+                "microsoft/Phi-3-mini-4k-instruct",
+                device_map="auto",
+                load_in_4bit=True,
+                trust_remote_code=True
+            )
+            
+            engines["guardrails"] = GuardrailsEngine(use_mock=False, base_model=base_model, tokenizer=tokenizer) if GuardrailsEngine else None
+            engines["router"] = RouterEngine(use_mock=False, base_model=base_model, tokenizer=tokenizer) if RouterEngine else None
+            engines["response"] = ResponseEngine(use_mock=False, base_model=base_model, tokenizer=tokenizer) if ResponseEngine else None
+            
+        except Exception as e:
+            print(f"Engine Initialization Error: {e}")
+            
     return engines
 
 @app.on_event("startup")
